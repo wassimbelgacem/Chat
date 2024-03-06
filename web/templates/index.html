@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rasa Chatbot with CV Upload</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            margin: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: linear-gradient(90deg, rgba(9,9,121,1) 0%, rgba(0,212,255,1) 100%);
+            border-radius: 15px;
+            box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+        }
+
+        #chat-container {
+            border: 1px solid #d6d8db;
+            border-radius: 10px;
+            padding: 10px;
+            background-color: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow-y: scroll;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+
+        #input-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 8px;
+            margin-right: 5px;
+            border: 1px solid #d6d8db;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        button {
+            padding: 8px 16px;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: scale(1.1);
+        }
+
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-upload {
+            display: flex;
+            align-items: center;
+        }
+
+        .file-upload-btn {
+            background-color: #28a745;
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload-btn:hover {
+            background-color: #1e7e34;
+            transform: scale(1.1);
+        }
+
+        .file-name {
+            margin-left: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h1 class="text-center mb-4">ABSHORE Chatbot </h1>
+
+                <div id="chat-container"></div>
+
+                <div id="input-container">
+                    <input type="text" id="user-input" placeholder="Type a message..." class="form-control">
+                    <button onclick="sendMessage()" class="btn btn-primary">Send</button>
+                </div>
+
+                <form id="upload-form" action="/upload" method="post" enctype="multipart/form-data">
+                    <label for="cvFile" class="mt-3">Choose a CV file:</label>
+                    <div class="file-upload">
+                        <label for="cvFile" class="file-upload-btn btn btn-success">
+                            Choose File
+                        </label>
+                        <span class="file-name"></span>
+                        <input type="file" id="cvFile" name="file" accept=".pdf" class="form-control-file" required>
+                    </div>
+                    <br>
+                    <input type="submit" value="Upload" class="btn btn-success mt-2">
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    async function sendMessage() {
+        const userInput = document.getElementById('user-input').value;
+        if (userInput.trim() !== '') {
+            appendMessage(userInput, 'You');
+            console.log('Sending message to Rasa:', userInput);
+            const rasaResponse = await simulateRasaAPI(userInput);
+            console.log('Received response from Rasa:', rasaResponse);
+            document.getElementById('user-input').value = '';
+            // appendMessage(rasaResponse, 'Bot');
+        }
+    }
+
+    async function simulateRasaAPI(userInput) {
+        console.log(`Simulating Rasa API call with message: ${userInput}`);
+        const response = await fetch('http://localhost:5005/webhooks/rest/webhook', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                sender: 'user',
+                message: userInput,
+            }),
+        });
+
+        const responseData = await response.json();
+        const botResponse = responseData.length > 0 ? responseData[0].text : "Sorry, I wasn't able to understand. Could you please rephrase it?";
+        appendMessage(botResponse, 'Bot');
+        return botResponse;
+    }
+
+    function appendMessage(message, sender) {
+        console.log(`Appending message: ${message} from ${sender}`);
+        const chatContainer = document.getElementById('chat-container');
+        const newMessage = document.createElement('div');
+        newMessage.innerHTML = `<strong>${sender}:</strong> ${message}`;
+        chatContainer.appendChild(newMessage);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    // Add event listener for file input change
+    document.getElementById('cvFile').addEventListener('change', function (event) {
+        const fileName = event.target.files[0].name;
+        document.querySelector('.file-name').innerText = fileName;
+    });
+    // Modify the form submission to prevent default behavior
+    document.getElementById('upload-form').addEventListener('submit', async function (event) {
+        event.preventDefault();
+
+        // Your logic for handling file upload goes here
+        const fileInput = document.getElementById('cvFile');
+        const file = fileInput.files[0];
+        if (file) {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            // Make an API call to upload the file
+            const uploadResponse = await fetch('/upload', {
+                method: 'POST',
+                body: formData,
+            });
+
+            // Handle the upload response if needed
+            console.log(await uploadResponse.text());
+        }
+    });
+
+    // Add event listener for "Enter" key press
+    document.getElementById('user-input').addEventListener('keydown', function (event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            sendMessage();
+        }
+    });
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,48 @@
+version: "3.1"
+
+intents:
+  - greet
+  - goodbye
+  - affirm
+  - deny
+  - mood_great
+  - mood_unhappy
+  - bot_challenge
+  - outofscope
+  - inform_cv_upload
+  - finish_cv_upload
+responses:
+  utter_inform_cv_upload:
+    - text: "Please upload your CV in PDF format , don't forget the write 'Done' when you finish"
+
+  utter_cv_upload_successful:
+    - text: "Your CV has been uploaded successfully! Thank you."
+
+
+  utter_greet:
+  - text: "Hey! How are you?"
+
+  utter_cheer_up:
+  - text: "Here is something to cheer you up:"
+    image: "https://i.imgur.com/nGF1K8f.jpg"
+
+  utter_did_that_help:
+  - text: "Did that help you?"
+
+  utter_happy:
+  - text: "Great, carry on!"
+
+  utter_outofscope:
+  - text: "Sorry, I wasn't able to understand. Could you please rephrase it?"
+
+  utter_goodbye:
+  - text: "Bye"
+
+  utter_iamabot:
+  - text: "I am a bot, powered by Rasa."
+
+session_config:
+  session_expiration_time: 60
+  carry_over_slots_to_new_session: true
+actions:
+  - action_handle_cv_upload
